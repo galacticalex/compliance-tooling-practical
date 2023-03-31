@@ -1,0 +1,28 @@
+# folders
+dist/
+.settings/
+target/
+dirigible_local/
+bin/
+log/
+.idea
+.history
+.vscode
+
+# Ignore log/ folder rule, for logs API
+!components/api-log/src/**/
+
+# files
+.DS_Store
+.project
+.classpath
+*.bak
+*.class
+*.jar
+derby.log
+*.versionsBackup
+*.fpr
+*.iml
+*.factorypath
+*.log
+dependency-reduced-pom.xml

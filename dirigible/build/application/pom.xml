@@ -1,0 +1,279 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.eclipse.dirigible</groupId>
+        <artifactId>dirigible-build-parent</artifactId>
+        <version>8.0.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+	<name>Build - Application</name>
+	<artifactId>dirigible-application</artifactId>
+	<packaging>jar</packaging>
+
+
+	<dependencies>
+
+		<!-- Platform -->
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+			<version>${spring.boot.slf4j.version}</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-core</artifactId>
+			<version>${spring.boot.logback.version}</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
+			<version>${spring.boot.logback.version}</version>
+			<scope>compile</scope>
+		</dependency>
+
+		<!-- Commons -->
+		<dependency>
+			<groupId>org.eclipse.dirigible</groupId>
+			<artifactId>dirigible-commons-config</artifactId>
+			<version>8.0.0-SNAPSHOT</version>
+		</dependency>
+
+		<!-- Spring Boot -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+			<version>${spring.boot.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.apache.logging.log4j</groupId>
+					<artifactId>log4j-to-slf4j</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+		    <groupId>org.springframework.boot</groupId>
+		    <artifactId>spring-boot-starter-websocket</artifactId>
+		    <version>${spring.boot.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jdbc</artifactId>
+			<version>${spring.boot.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+			<version>${spring.boot.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+			<version>${spring.boot.version}</version>
+		</dependency>
+		<dependency>
+		  	<groupId>org.springframework.boot</groupId>
+		  	<artifactId>spring-boot-starter-validation</artifactId>
+		  	<version>${spring.boot.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+			<version>${spring.boot.version}</version>
+		</dependency>
+		
+		<dependency>
+	        <groupId>org.springframework.security</groupId>
+	        <artifactId>spring-security-web</artifactId>
+	        <version>${spring-security.version}</version>
+	    </dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<version>${spring.boot.version}</version>
+			<scope>test</scope>
+			<exclusions>
+            <exclusion>
+                <groupId>org.junit.vintage</groupId>
+                <artifactId>junit-vintage-engine</artifactId>
+            </exclusion>
+        </exclusions>
+		</dependency>
+		<dependency>
+	        <groupId>org.springframework.security</groupId>
+	        <artifactId>spring-security-test</artifactId>
+	        <version>${spring-security.version}</version>
+	        <scope>test</scope>
+	    </dependency>
+
+		<!-- Date Type Utils -->
+		<dependency>
+			<groupId>com.fasterxml.jackson.datatype</groupId>
+			<artifactId>jackson-datatype-joda</artifactId>
+			<version>${jackson.databind.version}</version>
+		</dependency>
+
+		<!-- Swagger -->
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-ui</artifactId>
+			<version>${org.springdoc.openapi.ui.version}</version>
+		</dependency>
+
+		<!-- Data Access -->
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<version>${h2database.version}</version>
+		</dependency>
+
+		<!-- WebJars -->
+		<dependency>
+			<groupId>org.webjars</groupId>
+			<artifactId>webjars-locator</artifactId>
+			<version>${webjars-locator}</version>
+		</dependency>
+
+		<!-- Olingo -->
+		<dependency>
+			<groupId>org.apache.olingo</groupId>
+			<artifactId>olingo-odata2-lib</artifactId>
+			<version>${olingo.version}</version>
+			<type>pom</type>
+			<exclusions>
+				<exclusion>
+					<groupId>javax.ws.rs</groupId>
+					<artifactId>javax.ws.rs-api</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
+		<!-- Core -->
+		<dependency>
+			<groupId>org.eclipse.dirigible</groupId>
+			<artifactId>dirigible-components-group-core</artifactId>
+			<version>8.0.0-SNAPSHOT</version>
+			<type>pom</type>
+		</dependency>
+		
+		<!-- Security -->
+		<dependency>
+			<groupId>org.eclipse.dirigible</groupId>
+			<artifactId>dirigible-components-security-basic</artifactId>
+			<version>8.0.0-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>org.eclipse.dirigible</groupId>
+			<artifactId>dirigible-components-security-keycloak</artifactId>
+			<version>8.0.0-SNAPSHOT</version>
+		</dependency>
+		
+		<!-- Data -->
+		<dependency>
+			<groupId>org.eclipse.dirigible</groupId>
+			<artifactId>dirigible-components-group-database</artifactId>
+			<version>8.0.0-SNAPSHOT</version>
+			<type>pom</type>
+		</dependency>
+		
+		<!-- Engine -->
+		<dependency>
+			<groupId>org.eclipse.dirigible</groupId>
+			<artifactId>dirigible-components-group-engines</artifactId>
+			<version>8.0.0-SNAPSHOT</version>
+			<type>pom</type>
+		</dependency>
+		
+		<!-- IDE -->
+		<dependency>
+			<groupId>org.eclipse.dirigible</groupId>
+			<artifactId>dirigible-components-group-ide</artifactId>
+			<version>8.0.0-SNAPSHOT</version>
+			<type>pom</type>
+		</dependency>
+		
+		<!-- API -->
+		<dependency>
+			<groupId>org.eclipse.dirigible</groupId>
+			<artifactId>dirigible-components-group-api</artifactId>
+			<version>8.0.0-SNAPSHOT</version>
+			<type>pom</type>
+		</dependency>
+		
+		<!-- Resources -->
+		<dependency>
+			<groupId>org.eclipse.dirigible</groupId>
+			<artifactId>dirigible-components-group-resources</artifactId>
+			<version>8.0.0-SNAPSHOT</version>
+			<type>pom</type>
+		</dependency>
+		
+		<!-- Templates -->
+		<dependency>
+			<groupId>org.eclipse.dirigible</groupId>
+			<artifactId>dirigible-components-group-templates</artifactId>
+			<version>8.0.0-SNAPSHOT</version>
+			<type>pom</type>
+		</dependency>
+		
+		<!-- Test Project -->
+		<dependency>
+			<groupId>org.eclipse.dirigible</groupId>
+			<artifactId>dirigible-components-test-project</artifactId>
+			<version>8.0.0-SNAPSHOT</version>
+		</dependency>
+
+		<!-- Dialects -->
+		<dependency>
+			<groupId>org.eclipse.dirigible</groupId>
+			<artifactId>dirigible-database-sql-postgres</artifactId>
+			<version>8.0.0-SNAPSHOT</version>
+		</dependency>
+
+		<!-- Drivers -->
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<version>${postgresql.version}</version>
+		</dependency>
+
+	</dependencies>
+
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<version>${spring.boot.version}</version>
+				<configuration>
+					<mainClass>org.eclipse.dirigible.DirigibleApplication</mainClass>
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>repackage</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>true</filtering>
+			</resource>
+		</resources>
+	</build>
+
+    <properties>
+        <license.header.location>../../licensing-header.txt</license.header.location>
+    </properties>
+
+</project>

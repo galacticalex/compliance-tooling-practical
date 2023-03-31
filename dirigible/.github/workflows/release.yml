@@ -1,0 +1,230 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      releaseVersion:
+        description: Release Version
+        required: true
+        default: 7.0.0
+      snapshotVersion:
+        description: Snapshot Version
+        required: true
+        default: 8.0.0-SNAPSHOT
+
+run-name: 'version set to ${{ github.event.inputs.releaseVersion }} for release'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+
+    - uses: actions/checkout@v3
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
+
+    - name: Cache local Maven repository
+      uses: actions/cache@v3
+      with:
+        path: ~/.m2/repository
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-maven-
+
+    - name: Set up JDK 13
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'zulu'
+        java-version: '13'
+        server-id: ossrh
+        server-username: MAVEN_USERNAME
+        server-password: MAVEN_PASSWORD
+        gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+        gpg-passphrase: GPG_PASSPHRASE
+        architecture: x64
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+      with:
+        install: true
+
+    - name: Set Multi-Builder Docker Buildx
+      run: docker buildx create --use --name multi-builder --platform linux/arm64,linux/amd64,linux/arm64/v8
+
+    - name: "Configure Git"
+      run: |
+        git fetch
+        git checkout master
+        git config user.name "$GITHUB_ACTOR"
+        git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+
+    - name: "Maven: Set Release Version"
+      run: mvn versions:set -DnewVersion=${{ github.event.inputs.releaseVersion }}
+
+    - name: Build Dirigible
+      run: mvn clean install -Dmaven.javadoc.skip=false
+
+#-----------------Publish to DockerHub-------------------#
+
+    - name: Docker Login
+      run: docker login -u ${{secrets.DOCKER_USER}} -p ${{secrets.DOCKER_PASSWORD}}
+
+    - name: Push Dirigible (Spring)
+      run: |
+        cd build/application
+        docker build --load --build-arg DIRIGIBLE_VERSION=${{ github.event.inputs.releaseVersion }} -t dirigible .
+        docker tag dirigible dirigiblelabs/dirigible:${{ github.event.inputs.releaseVersion }}
+        docker push dirigiblelabs/dirigible:${{ github.event.inputs.releaseVersion }}
+        docker image prune -a -f
+        cd ../../
+#-----------------Publish to DockerHub-------------------#
+
+#---------------Publish to Maven Central-----------------#
+
+    - name: Publish packages to Maven Central
+      run: |
+        mvn javadoc:jar
+        mvn deploy -P release -DskipTests -Dmaven.test.skip=true
+      env:
+        MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
+        MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
+        GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASS_PHRASE }}
+
+    - name: "Git: Commit Release Version"
+      run: |
+        git add .
+        git commit -m "version set to ${{ github.event.inputs.releaseVersion }} for release"
+        git checkout -b ${{ github.event.inputs.releaseVersion }}
+        git checkout master
+
+    - name: "Maven: Set Snapshot Version"
+      run: mvn versions:set -DnewVersion=${{ github.event.inputs.snapshotVersion }}
+
+    - name: "Git: Commit Snapshot Version"
+      run: |
+        git add .
+        git commit -m "version set to ${{ github.event.inputs.snapshotVersion }} for development"
+
+#---------------Publish to Maven Central-----------------#
+
+#----------------Publish GitHub Release------------------#
+
+    - name: Package WAR files
+      run: |
+        zip --junk-paths application-all build/application/target/dirigible-application-${{ github.event.inputs.releaseVersion }}.jar
+
+    - name: Create Release
+      id: create_release
+      uses: softprops/action-gh-release@v1
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        tag_name: v${{ github.event.inputs.releaseVersion }}
+        name: ${{ github.event.inputs.releaseVersion }}
+        draft: false
+        prerelease: false
+        files: |
+          ./application-all.zip
+        body: |
+          ## Eclipse Dirigible - ${{ github.event.inputs.releaseVersion }}
+
+          #### Release:
+
+          The lates release notes are available [here](https://www.dirigible.io/releases.html).
+
+          > _**Note:** All released versions can be found [here](https://github.com/eclipse/dirigible/releases/)._
+          
+          #### Maven:
+
+          250+ Maven dependencies can be found [here]( https://search.maven.org/#search%7Cga%7C1%7Corg.eclipse.dirigible).
+          ```xml
+          <dependency>
+              <groupId>org.eclipse.dirigible</groupId>
+              <artifactId>dirigible-components-group-core</artifactId>
+              <version>${{ github.event.inputs.releaseVersion }}</version>
+          </dependency>
+          ```
+
+          #### Helm:
+
+          To install Eclipse Dirigible with Helm go to the [Setup with Helm](https://www.dirigible.io/help/setup/helm/) page.
+          All Helm charts, with detailed explanation, setup and configurations, can be found [here](https://artifacthub.io/packages/search?org=dirigiblelabs).
+
+          ```
+          helm repo add dirigible https://eclipse.github.io/dirigible
+          helm repo update
+          helm install dirigible dirigible/dirigible --version ${{ github.event.inputs.releaseVersion }}
+          ```
+
+          #### Docker images:
+            - [dirigiblelabs/dirigible](https://hub.docker.com/r/dirigiblelabs/dirigible/tags?page=1&ordering=last_updated) - All-in-one docker image - recommended for local test & development.
+
+          > _**Note:** All Docker images are availalbe [here](https://hub.docker.com/u/dirigiblelabs)_
+
+          #### Available for download `*.war` packages:
+            - _**[application-all](https://github.com/eclipse/dirigible/releases/download/v${{ github.event.inputs.releaseVersion }}/application-all.zip) - All-in-one package - recommended for local test & development.**_
+            
+          > _**Note:** Unzip the downloaded file to extract the `application-all-XXX.jar` binary._
+          
+          For more information go to [https://www.dirigible.io/help/setup/](https://www.dirigible.io/help/setup/).
+    
+#----------------Publish GitHub Release------------------#
+
+    - name: "Git: Push Changes"
+      run: |
+        git push origin ${{ github.event.inputs.releaseVersion }}
+        git push
+
+#----------------Publish Helm Release------------------#
+
+    - name: Helm tool installer
+      uses: Azure/setup-helm@v3
+    - name: Helm Charts Release - Checkout gh-pages
+      run: |
+        mkdir charts-temp
+        cp -r build/helm-charts/ charts-temp/
+
+        #### Git Checkout Workaround
+        git add .github/
+        git add .reuse/
+        git add LICENSES/
+        git add logo/
+        git add components/
+        git reset --hard
+        ####
+
+        git fetch
+        git checkout gh-pages
+        
+        cp charts/* .
+
+    - name: Helm Charts Release - Set Chart Version - Dirigible
+      run: |
+        cd charts-temp/helm-charts/dirigible/
+        find *.yaml -type f -exec sed -i ''s/#{DirigibleVersion}#/${{ github.event.inputs.releaseVersion }}/g'' {} \;
+
+    - name: Helm Charts Release
+      run: |
+
+        cp charts/* charts-temp/helm-charts/
+        cd charts-temp/helm-charts/
+
+        helm package dirigible
+        
+        cd ..
+        helm repo index helm-charts/ --url https://eclipse.github.io/dirigible/charts
+        
+        cp helm-charts/index.yaml ../.
+        cp helm-charts/dirigible-${{ github.event.inputs.releaseVersion }}.tgz ../charts/
+
+        cd ..
+        git config user.name "$GITHUB_ACTOR"
+        git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+        git add index.yaml
+        git add charts/
+        git commit -m "Updates Helm Charts - Release ${{ github.event.inputs.releaseVersion }}"
+        git push origin gh-pages
+
+        git add .
+        git reset --hard
+        git checkout master
+#----------------Publish Helm Release------------------#
