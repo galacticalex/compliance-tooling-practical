@@ -1,0 +1,383 @@
+# Host on which InfraBox will be accessible (i.e. "infrabox.example.com")
+host: # <REQUIRED>
+
+port: 443
+
+# Namespace for system components
+system_namespace: infrabox-system
+
+# Namespace in which all jobs will be started
+worker_namespace: infrabox-worker
+
+general:
+    # Set it to true if certificates of your Github Enterprise the SSL
+    # certificate you are using for InfraBox itself are self signed.
+    dont_check_certificates: false
+
+    report_issue_url: https://github.com/SAP/infrabox/issues
+
+    log_level: info
+
+image:
+    # Address of the docker registry which contains
+    # all the InfraBox images. It must be accessible
+    # by all hosts which run your kubernetes cluster.
+    repository: quay.io/infrabox
+
+    # Chose a build or version tag, latest should not be used for production systems
+    # to ensure all containers are running the same version.
+    tag: 1.1.5
+
+    private_repo: false
+
+    username: #<required if use private_repo>
+
+    password: #<required if use private_repo>
+
+
+ha:
+    enabled: false
+
+    check_interval: 10
+
+    active_timeout: 60
+
+    global_host: #<required if use ha>
+
+    global_port: 443
+
+    checker_slack_hook: #<checker will report cluster status changes here if set>
+
+cluster:
+    # Unique name of all clusters which are connected to the
+    # same postgresql database
+    name: master
+
+    # Assigned labels
+    labels: default
+
+admin:
+    # Email of the admin account
+    email: # <REQUIRED>
+
+    # Password of the admin accounts
+    password: # <REQUIRED>
+
+    # base64 encoded private key
+    private_key: # <REQUIRED>
+
+    # base64 encoded public key
+    public_key: # <REQUIRED>
+
+ingress:
+    # If enabled an Ingress will be created
+    enabled: true
+
+    # Use Kube-Lego (tls-acme) annotation for TLS
+    use_kube_lego: false
+
+# Exactly one storage option has to be enabled
+storage:
+    gcs:
+        # Enable google cloud storage
+        enabled: false
+
+        # Bucket name
+        bucket: # <REQUIRED>
+
+        # base64 encoded service account .json file
+        service_account: # <REQUIRED>
+
+    s3:
+        # Enabled S3
+        enabled: false
+
+        # Region
+        region: # <REQUIRED>
+
+        # Region endpoint
+        endpoint: # <REQUIRED>
+
+        # Region endpoint port
+        port: 443
+
+        # If https should be used or not
+        secure: true
+
+        # Bucket name
+        bucket: # <REQUIRED>
+
+        # AWS Access Key ID
+        access_key_id: # <REQUIRED>
+
+        # AWS Secret Access Key
+        secret_access_key: # <REQUIRED>
+
+    azure:
+        # Enable Azure
+        enabled: false
+
+        # Account name
+        account_name: # <REQUIRED>
+
+        # Account key
+        account_key: # <REQUIRED>
+
+    swift:
+        # Enable Swift
+        enabled: false
+
+        # auth url
+        auth_url: # <REQUIRED>
+
+        #project domain name or tenant name
+        project_domain_name: # <REQUIRED>
+
+        #project name
+        project_name: # <REQUIRED>
+
+        #user domain name
+        user_domain_name: # <REQUIRED>
+
+        #swift container name
+        container_name: # <REQUIRED>
+
+        #username
+        username: # <REQUIRED>
+
+        #password
+        password: # <REQUIRED>
+
+# PostgreSQL Database configuration. Use either Google's CloudSQL or any other PostgreSQL Database
+database:
+    cloudsql:
+        # Enable
+        enabled: false
+
+        # Database name
+        db: # <REQUIRED>
+
+        # Username
+        username: # <REQUIRED>
+
+        # Password
+        password: # <REQUIRED>
+
+        # The instance connection name
+        instance_connection_name: # <REQUIRED>
+
+        # base64 encoded service account .json file
+        service_account: # <REQUIRED>
+
+    postgres:
+        enabled: false
+
+        # Host of your postgres database
+        host: # <REQUIRED>
+
+        # Port of your postgres database
+        port: 5432
+
+        # Database name
+        db: # <REQUIRED>
+
+        # Username
+        username: # <REQUIRED>
+
+        # Password
+        password: # <REQUIRED>
+
+# Gerrit configuration
+gerrit:
+    # Enable gerrit
+    enabled: false
+
+    # Gerrit Hostname
+    hostname: # <REQUIRED>
+
+    # Username
+    username: # <REQUIRED>
+
+    # base64 encoded private key for connecting to gerrit
+    private_key: # <REQUIRED>
+
+    # Port
+    port: 29418
+
+# Github configuration
+github:
+    # Enable Github
+    enabled: false
+
+    # Client ID of you Github App
+    client_id: # <REQUIRED>
+
+    # Client Secret of your Github App
+    client_secret: # <REQUIRED>
+
+    # A secret for the webhooks
+    webhook_secret: # <REQUIRED>
+
+    login:
+        # If true then user can login with the Github account
+        enabled: false
+
+        # Github Login URL, change it if you use Github Enterprise
+        url: https://github.com/login
+
+        # If Github login is enabled you can limit access to users which belong to a certain set of
+        # Github Organizations. Comma separated list for Github Organizations (i.e. "Org1,Org2,Org3")
+        # If no organization is set everybody can login with its github ccount
+        allowed_organizations:
+
+    # Github API URL
+    api_url: https://api.github.com
+
+    host: github.com
+
+    token_access: false
+
+
+# General Account configuration
+account:
+    signup:
+        # Enable users to signup with Email/Username/Password
+        enabled: false
+
+    ldap:
+        # Enables LDAP, disables "account.signup.enabled"
+        enabled: false
+
+        # DN
+        dn: # <REQUIRED>
+
+        # Password
+        password: # <REQUIRED>
+
+        # Base
+        base: # <REQUIRED>
+
+        # URL
+        url: # <REQUIRED>
+
+    saml:
+        # Enables SAML
+        enabled: false
+
+        # Define mapping of saml attributes to user details
+        format:
+            name: '{name}'
+            username: '{NameID}'
+            email: '{email}'
+
+        settings_path: 'src/api/handlers/account'
+
+        # Strict: In production, the strict parameter MUST be set as "true".
+        strict: true
+        # Enable debug mode (outputs errors).
+        debug: false
+        # Service Provider
+        sp:
+            # ID of SP (must be a URI)
+            entityId: # <REQUIRED> https://host/saml/metadata
+            assertionConsumerService:
+                # callback url where the <Response> from the IdP will be returned
+                url: # <REQUIRED> https://host/saml/callback
+                # Type of SAML protocol binding for the idp-response
+                binding: urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST
+            singleLogoutService:
+                # callback url where the <Response> from the IdP will be returned
+                url: # <REQUIRED> https://host/saml/logout
+                # Type of SAML protocol binding for the idp-response
+                binding: urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect
+            # SAML Format
+            NameIDFormat: # <REQUIRED>
+            # SP certificate
+            x509cert: # <REQUIRED>
+            # SP Private Key
+            privateKey: # <REQUIRED>
+
+        # Identity Provider
+        idp:
+            # IdP entityID
+            entityId: # <REQUIRED>
+            singleSignOnService:
+                # url to sso service
+                url: # <REQUIRED>
+                # Type of SAML-Binding
+                binding: urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect
+            singleLogoutService:
+                # url to slo service
+                url: # <REQUIRED>
+                # Type of SAML protocol binding
+                binding: urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect
+            # Public IdP certificate
+            x509cert: # <REQUIRED>
+
+        # Advanced settings for saml-security
+        advanced:
+            nameIdEncrypted: false
+            authnRequestsSigned: true
+            logoutRequestSigned: false
+            logoutResponseSigned: false
+            signMetadata: false
+            wantMessagesSigned: false
+            wantAssertionsSigned: true
+            wantAssertionsEncrypted: false
+            wantNameId: true
+            wantNameIdEncrypted: false
+            wantAttributeStatement: true
+            rejectUnsolicitedResponsesWithInResponseTo: false
+            requestedAuthnContext: true
+            requestedAuthnContextComparison: exact
+            signatureAlgorithm: http://www.w3.org/2000/09/xmldsig#rsa-sha1
+            digestAlgorithm: http://www.w3.org/2000/09/xmldsig#sha1
+
+api:
+    # Replicas for the API Server
+    replicas: 2
+
+local_cache:
+    # Enable a shared cache for all jobs running on the same machine
+    enabled: false
+
+    # Host path which will be available to all jobs at /infrabox/local-cache
+    host_path: /tmp/infrabox/local_cache
+
+docker_registry:
+    # Instances of the docker registry
+    replicas: 1
+
+job:
+    # Configure the internal docker daemon. Content should be a valid json
+    # docker daemon config. It's required if you run with a self signed certificate
+    # for your domain. In this case you have to mark the internal registry as insecure.
+    # I.e.: {"insecure-registries": ["<HOST>"]}
+    docker_daemon_config: |-
+        {}
+
+    storage_driver: overlay
+    #rootca_pem: |- # Using base64 encoded string to put the cert in one line
+
+
+monitoring:
+    # Enable InfraBox Monitoring. Requires prometheus-operator to be available.
+    enabled: false
+
+cachet:
+    # Enable Cachet Status page
+    enabled: false
+
+    endpoint: # <REQUIRED> i.e. https://status.example.com/api/v1
+
+    api_token: # <REQUIRED>
+
+legal:
+    privacy_url: ""
+    terms_of_use_url: ""
+
+network_policies:
+    enabled: false
+
+dev:
+    enabled: false

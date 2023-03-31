@@ -1,0 +1,84 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+    name: infrabox-api
+    namespace: {{ template "system_namespace" . }}
+    labels:
+        app: infrabox-api
+spec:
+    replicas: {{ default 1 .Values.api.replicas }}
+    template:
+        metadata:
+            labels:
+                app: infrabox-api
+        spec:
+            {{ include "imagePullSecret" . | indent 8 }}
+            containers:
+            {{ include "containers_database" . | indent 12 }}
+            {{ include "containers_opa" . | indent 12 }}
+            {{ if .Values.gerrit.enabled }}
+            -
+                image: {{ include "image_repository" . }}/gerrit-api:{{ include "image_tag" . }}
+                name: gerrit-api
+                env:
+                {{ include "env_general" . | indent 16 }}
+                {{ include "env_gerrit" . | indent 16 }}
+                {{ include "env_version" . | indent 16 }}
+                volumeMounts:
+                {{ include "mounts_gerrit" . | indent 16 }}
+            {{ end }}
+            -
+                name: api
+                image: {{ include "image_repository" . }}/api:{{ include "image_tag" . }}
+                {{ if .Values.dev.enabled }}
+                command: ["/infrabox/api/run_dev.sh"]
+                {{ end }}
+                volumeMounts:
+                {{ include "mounts_rsa_public" . | indent 16 }}
+                {{ include "mounts_rsa_private" . | indent 16 }}
+                {{ include "mounts_gcs" . | indent 16 }}
+                {{ include "mounts_saml" . | indent 16 }}
+                {{ if .Values.dev.enabled }}
+                -
+                    name: code
+                    mountPath: "/infrabox/api"
+                    subPath: src/api
+                    readOnly: true
+                -
+                    name: code
+                    mountPath: "/infrabox/pyinfraboxutils"
+                    subPath: src/pyinfraboxutils
+                    readOnly: true
+                -
+                    name: code
+                    mountPath: "/infrabox/pyinfrabox"
+                    subPath: src/pyinfrabox
+                    readOnly: true
+                {{ end }}
+                env:
+                {{ include "env_database" . | indent 16 }}
+                {{ include "env_gcs" . | indent 16 }}
+                {{ include "env_s3" . | indent 16 }}
+                {{ include "env_azure" . | indent 16 }}
+                {{ include "env_swift" . | indent 16 }}
+                {{ include "env_general" . | indent 16 }}
+                {{ include "env_github" . | indent 16 }}
+                {{ include "env_github_secrets" . | indent 16 }}
+                {{ include "env_ldap" . | indent 16 }}
+                {{ include "env_saml" . | indent 16 }}
+                {{ include "env_version" . | indent 16 }}
+                {{ include "env_cluster" . | indent 16 }}
+                {{ include "env_account" . | indent 16 }}
+                {{ include "env_ha" . | indent 16 }}
+                {{ include "env_opa" . | indent 16 }}
+                {{ include "env_legal" . | indent 16 }}
+                -
+                    name: INFRABOX_GERRIT_ENABLED
+                    value: {{ .Values.gerrit.enabled | quote }}
+            volumes:
+                {{ include "volumes_database" . | indent 16 }}
+                {{ include "volumes_rsa" . | indent 16 }}
+                {{ include "volumes_gcs" . | indent 16 }}
+                {{ include "volumes_gerrit" . | indent 16 }}
+                {{ include "volumes_saml" . | indent 16 }}
+                {{ include "volumes_dev" . | indent 16 }}

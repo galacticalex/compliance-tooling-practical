@@ -1,0 +1,116 @@
+{{ define "ing_dashboard" }}
+-
+    path: /dashboard
+    backend:
+        serviceName: infrabox-static
+        servicePort: 80
+{{ end }}
+
+{{ define "ing_root" }}
+-
+    path: /
+    backend:
+        serviceName: infrabox-static
+        servicePort: 80
+{{ end }}
+
+{{ define "ing_github"}}
+-
+    path: /github/hook
+    backend:
+        serviceName: infrabox-github-trigger
+        servicePort: 8080
+-
+    path: /github/auth
+    backend:
+        serviceName: infrabox-api
+        servicePort: 8080
+{{ end }}
+
+{{ define "ing_saml"}}
+-
+    path: /saml
+    backend:
+        serviceName: infrabox-api
+        servicePort: 8080
+{{ end }}
+
+
+{{ if .Values.ingress.enabled }}
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+    name: infrabox
+    namespace: {{ template "system_namespace" . }}
+    annotations:
+        kubernetes.io/ingress.class: "nginx"
+        nginx.ingress.kubernetes.io/proxy-body-size: "2048m"
+        nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+        nginx.ingress.kubernetes.io/proxy-connect-timeout: "1200"
+        nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+        nginx.ingress.kubernetes.io/affinity: "cookie"
+        nginx.ingress.kubernetes.io/session-cookie-name: "route"
+        nginx.ingress.kubernetes.io/session-cookie-hash: "sha1"
+        nginx.ingress.kubernetes.io/ssl-redirect: "true"
+        {{ if .Values.ingress.use_kube_lego }}
+        kubernetes.io/tls-acme: "true"
+        {{ end }}
+spec:
+    rules:
+    -
+        host: {{ .Values.host }}
+        http:
+            paths:
+            {{ if .Values.ha.enabled }}
+                {{ include "ing_dashboard" . | indent 12 }}
+            {{ else if eq .Values.cluster.name "master" }}
+                {{ include "ing_dashboard" . | indent 12 }}
+            {{ end }}
+            -
+                path: /api
+                backend:
+                    serviceName: infrabox-api
+                    servicePort: 8080
+            {{ if .Values.github.enabled }}
+            {{ if .Values.ha.enabled }}
+                {{ include "ing_github" . | indent 12 }}
+            {{ else if eq .Values.cluster.name "master" }}
+                {{ include "ing_github" . | indent 12 }}
+            {{ end }}
+            {{ end }}
+            {{ if .Values.account.saml.enabled }}
+            {{ if .Values.ha.enabled }}
+                {{ include "ing_saml" . | indent 12 }}
+            {{ else if eq .Values.cluster.name "master" }}
+                {{ include "ing_saml" . | indent 12 }}
+            {{ end }}
+            {{ end }}
+            -
+                path: /v2
+                backend:
+                    serviceName: infrabox-docker-registry
+                    servicePort: 8080
+            {{ if .Values.monitoring.enabled }}
+            -
+                path: /grafana
+                backend:
+                    serviceName: infrabox-grafana
+                    servicePort: 80
+            {{ end }}
+            {{ if eq .Values.cluster.name "master" }}
+            -
+                path: /
+                backend:
+                    serviceName: infrabox-static
+                    servicePort: 80
+            {{ end }}
+            {{ if .Values.ha.enabled }}
+                {{ include "ing_root" . | indent 12 }}
+            {{ else if eq .Values.cluster.name "master" }}
+                {{ include "ing_root" . | indent 12 }}
+            {{ end }}
+    tls:
+        - hosts:
+            - {{ .Values.host }}
+          secretName: infrabox-tls-certs
+{{ end }}

@@ -1,0 +1,173 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+    name: infrabox-docker-registry
+    namespace: {{ template "system_namespace" . }}
+    labels:
+        app: infrabox-docker-registry
+spec:
+    replicas: {{ required "docker_registry.replicas is required" .Values.docker_registry.replicas }}
+    template:
+        metadata:
+            labels:
+                app: infrabox-docker-registry
+        spec:
+            {{ include "imagePullSecret" . | indent 8 }}
+            containers:
+            {{ include "containers_database" . | indent 12 }}
+            {{ include "containers_opa" . | indent 12 }}
+            -
+                name: auth
+                image: {{ include "image_repository" . }}/docker-registry-auth:{{ include "image_tag"  . }}
+                env:
+                {{ include "env_database" . | indent 16 }}
+                {{ include "env_docker_registry" . | indent 16 }}
+                {{ include "env_version" . | indent 16 }}
+                {{ include "env_opa" . | indent 16 }}
+                volumeMounts:
+                {{ include "mounts_rsa_public" . | indent 16 }}
+            -
+                name: nginx
+                image: {{ include "image_repository" . }}/docker-registry-nginx:{{ include "image_tag"  . }}
+                env:
+                {{ include "env_docker_registry" . | indent 16 }}
+                -
+                    name: INFRABOX_AUTH_HOST
+                    value: localhost
+                -
+                    name: INFRABOX_REGISTRY_HOST
+                    value: localhost
+                volumeMounts:
+            -
+                name: registry
+                image: registry:2.7.1
+                env:
+                -
+                    name: REGISTRY_HTTP_HOST
+                    value: {{ include "root_url" . }}
+                -
+                    name: REGISTRY_STORAGE_REDIRECT_DISABLE
+                    value: "true"
+                -
+                    name: REGISTRY_HTTP_SECRET
+                    value: {{ .Values.admin.private_key | sha256sum }}
+                {{ if .Values.storage.s3.enabled }}
+                -
+                    name: REGISTRY_STORAGE
+                    value: s3
+                -
+                    name: REGISTRY_STORAGE_S3_ENCRYPT
+                    value: "false"
+                -
+                    name: REGISTRY_STORAGE_S3_CHUNKSIZE
+                    value: "5242880"
+                -
+                    name: REGISTRY_STORAGE_S3_BUCKET
+                    value: {{ default "infrabox" .Values.storage.s3.bucket | quote }}
+                -
+                    name: REGISTRY_STORAGE_S3_REGION
+                    value: {{ .Values.storage.s3.region }}
+                -
+                    name: REGISTRY_STORAGE_S3_REGIONENDPOINT
+                    value: {{ .Values.storage.s3.endpoint }}:{{ .Values.storage.s3.port }}
+                -
+                    name: REGISTRY_STORAGE_S3_SECURE
+                    value: {{ .Values.storage.s3.secure | quote }}
+                -
+                    name: REGISTRY_STORAGE_S3_ACCESSKEY
+                    valueFrom:
+                        secretKeyRef:
+                            name: infrabox-s3-credentials
+                            key: accessKey
+                -
+                    name: REGISTRY_STORAGE_S3_SECRETKEY
+                    valueFrom:
+                        secretKeyRef:
+                            name: infrabox-s3-credentials
+                            key: secretKey
+                {{ end }}
+                {{ if .Values.storage.swift.enabled }}
+                -
+                    name: REGISTRY_STORAGE
+                    value: swift
+                -   name: REGISTRY_HEALTH_STORAGEDRIVER_ENABLED
+                    value: false
+                -
+                    name: REGISTRY_STORAGE_SWIFT_AUTHURL
+                    value: {{ .Values.storage.swift.auth_url }}
+                -
+                    name: REGISTRY_STORAGE_SWIFT_DOMAIN
+                    value: {{ .Values.storage.swift.project_domain_name }}
+                -
+                    name: REGISTRY_STORAGE_SWIFT_TENANT
+                    value: {{ .Values.storage.swift.project_name }}
+                -
+                    name: REGISTRY_STORAGE_SWIFT_CONTAINER
+                    value: {{ .Values.storage.swift.container_name }}
+                -
+                    name: REGISTRY_STORAGE_SWIFT_USERNAME
+                    valueFrom:
+                        secretKeyRef:
+                            name: infrabox-swift-credentials
+                            key: username
+                -
+                    name: REGISTRY_STORAGE_SWIFT_PASSWORD
+                    valueFrom:
+                        secretKeyRef:
+                            name: infrabox-swift-credentials
+                            key: password
+                {{ end }}
+                {{ if .Values.storage.azure.enabled }}
+                -
+                    name: REGISTRY_STORAGE
+                    value: azure
+                -
+                    name: REGISTRY_STORAGE_AZURE_CONTAINER
+                    value: registry
+                -
+                    name: REGISTRY_STORAGE_AZURE_ACCOUNTNAME
+                    valueFrom:
+                        secretKeyRef:
+                            name: infrabox-azure-credentials
+                            key: account-name
+                -
+                    name: REGISTRY_STORAGE_AZURE_ACCOUNTKEY
+                    valueFrom:
+                        secretKeyRef:
+                            name: infrabox-azure-credentials
+                            key: account-key
+                {{ end }}
+                {{ if .Values.storage.gcs.enabled }}
+                -
+                    name: REGISTRY_STORAGE
+                    value: gcs
+                -
+                    name: REGISTRY_STORAGE_GCS_BUCKET
+                    value: {{ default "infrabox" .Values.storage.gcs.bucket }}
+                -
+                    name: REGISTRY_STORAGE_GCS_KEYFILE
+                    value: /etc/infrabox/gcs/gcs_service_account.json
+                {{ end }}
+                volumeMounts:
+                {{ if .Values.storage.gcs.enabled }}
+                -
+                    name: gcs-service-account
+                    mountPath: /etc/infrabox/gcs
+                    readOnly: true
+                {{ end }}
+                livenessProbe:
+                    httpGet:
+                        path: /v2/
+                        port: 5000
+                    initialDelaySeconds: 60
+                    periodSeconds: 60
+
+            volumes:
+                {{ include "volumes_database" . | indent 16 }}
+                {{ include "volumes_rsa" . | indent 16 }}
+                {{ if .Values.storage.gcs.enabled }}
+                -
+                    name: gcs-service-account
+                    secret:
+                        secretName: infrabox-gcs
+                {{ end }}

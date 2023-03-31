@@ -1,0 +1,42 @@
+{{ define "gerrit_review_deployment" }}
+{{ if .Values.gerrit.enabled }}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+    name: infrabox-gerrit-review
+    namespace: {{ template "system_namespace" . }}
+    labels:
+        app: infrabox-gerrit-review
+spec:
+    replicas: 1
+    template:
+        metadata:
+            labels:
+                app: infrabox-gerrit-review
+        spec:
+            {{ include "imagePullSecret" . | indent 8 }}
+            containers:
+            {{ include "containers_database" . | indent 12 }}
+            -
+                name: gerrit-review
+                image: {{ include "image_repository" . }}/gerrit-review:{{ include "image_tag"  . }}
+                env:
+                {{ include "env_database" . | indent 16 }}
+                {{ include "env_ha" . | indent 16 }}
+                {{ include "env_gerrit" . | indent 16 }}
+                {{ include "env_general" . | indent 16 }}
+                {{ include "env_cluster" . | indent 16 }}
+                {{ include "env_version" . | indent 16 }}
+                volumeMounts:
+                {{ include "mounts_gerrit" . | indent 16 }}
+            volumes:
+                {{ include "volumes_database" . | indent 16 }}
+                {{ include "volumes_gerrit" . | indent 16 }}
+{{ end }}
+{{ end }}
+
+{{ if .Values.ha.enabled }}
+    {{ include "gerrit_review_deployment" . }}
+{{ else if eq .Values.cluster.name "master" }}
+    {{ include "gerrit_review_deployment" . }}
+{{ end }}

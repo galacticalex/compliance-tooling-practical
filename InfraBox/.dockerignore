@@ -1,0 +1,17 @@
+src/dashboard/dist/*
+src/dashboard/node_modules/*
+src/api/node_modules/*
+src/api/dist/*
+src/dashboard-client/node_modules/*
+src/dashboard-client/dist/*
+.vscode/*
+*.swp
+*.pyc
+.infrabox*
+!.infrabox/inputs
+src/services/gcp/pkg/client
+src/services/gcp/vendor
+src/services/gcp/tmp/_output
+src/services/namespace/pkg/client
+src/services/namespace/vendor
+src/services/namespace/namespace

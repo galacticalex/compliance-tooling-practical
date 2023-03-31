@@ -1,0 +1,20 @@
+kind: Service
+apiVersion: v1
+metadata:
+    name: infrabox-static
+    namespace: {{ template "system_namespace" . }}
+    labels:
+        app: infrabox-static
+spec:
+    selector:
+        app: infrabox-static
+    ports:
+    -
+        name: http-web
+        protocol: TCP
+        port: 80
+        {{ if .Values.dev.enabled }}
+        targetPort: 8080
+        {{ else }}
+        targetPort: 80
+        {{ end }}

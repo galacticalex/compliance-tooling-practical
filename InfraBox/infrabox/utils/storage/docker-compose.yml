@@ -1,0 +1,18 @@
+version: "3.2"
+
+services:
+    minio:
+        image: minio/minio
+        command: server /data
+        environment:
+            - MINIO_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE
+            - MINIO_SECRET_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+        ports:
+            - "9009:9000"
+
+    postgres:
+        build:
+            context: ../../../
+            dockerfile: infrabox/utils/storage/postgres/Dockerfile
+        ports:
+            - "5439:5432"

@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "infrabox-service-gcp.fullname" . }}
+  labels:
+    app: {{ template "infrabox-service-gcp.name" . }}
+    chart: {{ template "infrabox-service-gcp.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "infrabox-service-gcp.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "infrabox-service-gcp.name" . }}
+        release: {{ .Release.Name }}
+    spec:
+      serviceAccountName: infrabox-service-gcp
+      {{ if .Values.imagePullSecret }}
+      imagePullSecrets:
+        - name: {{ .Values.imagePullSecret }}
+      {{ end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          command: ["./gcp"]
+          args: ["-gcpserviceaccount", "/var/run/infrabox.net/gcp/service_account.json"]
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: "Always"
+          resources:
+          volumeMounts:
+          - name: service-account
+            mountPath: "/var/run/infrabox.net/gcp"
+            readOnly: true
+          env:
+          - name: WATCH_NAMESPACE
+            value: infrabox-worker
+          - name: MAX_NUM_CLUSTERS
+            value: {{ .Values.max_clusters | quote }}
+          - name: LOG_LEVEL
+            value: {{ .Values.log_level | quote }}
+          - name: GC_ENABLED
+            value: {{ .Values.gc_enabled | quote }}
+          {{ if .Values.gc_enabled }}
+          - name: GC_CLUSTER_MAX_AGE
+            value: {{ .Values.gc_cluster_max_age | quote }}
+          - name: GC_INTERVAL
+            value: {{ .Values.gc_interval | quote }}
+          {{ end }}
+          {{ if .Values.collectorImage}}
+          - name: COLLECTOR_IMAGE
+            value: {{ .Values.collectorImage }}
+          {{ end }}
+
+      volumes:
+      - name: service-account
+        secret:
+          secretName: "infrabox-service-gcp-sa"
