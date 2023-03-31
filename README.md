@@ -6,9 +6,11 @@ You work for **Company G** and have been tasked with verifying the compliance fo
 
 ## Further exercise info
 
-Ignore the licence of: this readme, the branding logo, and the scancode results (`.csv` and `.json`). 
+Someone has already started the compliance work. They ran scancode on the third-party modules, but forgot to include the installer script! You can view `results.csv` and `results.json` for summaries of the scan.
 
 There are four modules, what are their out-licence(s)? I.e., the out-licence of module 1, is an in-licence for the product.
+
+Ignore the licence of: this readme, the branding logo, and the scancode results. 
 
 Use any automated compliance tooling at your disposal to review the licences. For example: Command line tools, spreadsheet software, or just browsing through the source code!
 
