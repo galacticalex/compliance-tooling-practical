@@ -6,9 +6,13 @@ You work for **Company G** and have been tasked with verifying the compliance fo
 
 ## Further exercise info
 
-Someone has already started the compliance work. They ran scancode on the third-party modules, but forgot to include the installer script! You can view `results.csv` and `results.json` for summaries of the scan.
+Someone has already started the compliance work. They ran scancode on the third-party modules. You can view `results.csv` and `results.json` for summaries of the scan.
 
-There are four modules, what are their out-licence(s)? I.e., the out-licence of module 1, is an in-licence for the product.
+Here's a sketch of the architecture:
+
+![Architecture Diagram](architecture.png)
+
+There are four modules, what are *their* out-licence(s)? I.e., the out-licence of module 1, is an in-licence for the product.
 
 Ignore the licence of: this readme, the branding logo, and the scancode results. 
 
